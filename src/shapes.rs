@@ -62,19 +62,26 @@ const MAX_POLYGON_VERTICES: usize = 8;
 #[repr(C)]
 pub struct Polygon {
     /// The polygon vertices
-	pub vertices: [Vec2; MAX_POLYGON_VERTICES],
+	vertices: [Vec2; MAX_POLYGON_VERTICES],
 
 	/// The outward normal vectors of the polygon sides
-	pub normals: [Vec2; MAX_POLYGON_VERTICES],
+	normals: [Vec2; MAX_POLYGON_VERTICES],
 
 	/// The centroid of the polygon
-	pub centroid: Vec2,
+	centroid: Vec2,
 
 	/// The external radius for rounded polygons
-	pub radius: f32,
+	radius: f32,
 
 	/// The number of polygon vertices
-	pub vertex_count: u32
+	vertex_count: u32
+}
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct Hull {
+    points: [Vec2; MAX_POLYGON_VERTICES],
+    point_count: u32
 }
 
 impl Default for ShapeDef {
@@ -101,6 +108,22 @@ impl Polygon {
             b2MakeOffsetBox(hx,hy,center,angle)
         }
     }
+
+    pub fn new(hull: &Hull, radius: f32) -> Self {
+        unsafe {
+            b2MakePolygon(hull, radius)
+        }
+    }
+}
+
+impl Hull {
+    pub fn compute(points: &[Vec2]) -> Self {
+        // sanity check to avoid issues with the conversion to u32
+        assert!(points.len() < 1000);
+        unsafe {
+            b2ComputeHull(points.as_ptr(),points.len() as u32)
+        }
+    }
 }
 
 extern "C" {
@@ -108,4 +131,7 @@ extern "C" {
 
     fn b2MakeBox(hx: f32, hy: f32) -> Polygon;
     fn b2MakeOffsetBox(hx: f32, hy: f32, center: Vec2, angle: f32) -> Polygon;
+    fn b2MakePolygon(hull: &Hull, radius: f32) -> Polygon;
+
+    fn b2ComputeHull(points: *const Vec2, count: u32) -> Hull;
 }

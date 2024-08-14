@@ -10,6 +10,7 @@ pub mod debug_draw;
 /// Used to mark our handles as !Send and !Sync for some attempt at thread safety.
 type PhantomNoSend = PhantomData<*mut ()>;
 
+pub use math::Vec2;
 pub use world::{World, WorldDef};
 pub use body::{Body, BodyDef};
 pub use shapes::{Shape, ShapeDef};
