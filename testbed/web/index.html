@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Sand Reckoner</title>
+        <style>
+            html,
+            body,
+            canvas {
+                font-family: sans-serif;
+                margin: 0px;
+                padding: 0px;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                position: absolute;
+                background: black;
+                z-index: 0;
+            }
+            dialog {
+                margin: 100px auto;
+
+                color: white;
+                background: #111;
+                border: 1px solid white;
+            }
+            dialog button, dialog input {
+                background: black;
+                border: 1px solid white;
+                color: white;
+                font-size: 20pt;
+                margin: 5px 0;
+            }
+            dialog button {
+                width: 100%;
+            }
+            .bottom-bar {
+                position: absolute;
+                z-index: 1;
+                bottom: 0;
+                height: 30px;
+                width: 100%;
+
+                background: #111;
+                border-top: 1px solid white;
+                text-align: right;
+            }
+            .bottom-bar a {
+                line-height: 30px;
+                margin: 0 10px;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="glcanvas" tabindex='1'></canvas>
+        <script src="mq_js_bundle.js"></script>
+        <script>
+            var text_decoder = new TextDecoder();
+            miniquad_add_plugin({
+                register_plugin: function(imports) {
+                    imports.env.js_now = function() {
+                        return performance.now() / 1000;
+                    }
+                }
+            });
+            
+            document.body.addEventListener("contextmenu",()=>{
+                event.preventDefault();
+            });
+            load("testbed.wasm");
+        </script>
+    </body>
+</html>
