@@ -1,9 +1,13 @@
-use macroquad::{color::Color, models::draw_mesh, shapes::{draw_poly, draw_triangle}};
+use macroquad::{
+    color::Color,
+    models::draw_mesh,
+    shapes::{draw_poly, draw_triangle},
+};
 
 use super::UnsupportedError;
 
 pub struct Engine {
-    world: box2d3::World
+    world: box2d3::World,
 }
 
 impl Engine {
@@ -11,22 +15,20 @@ impl Engine {
         let world_def = box2d3::WorldDef::default();
         let world = box2d3::World::new(&world_def);
 
-        Self {
-            world
-        }
+        Self { world }
     }
 }
 
 fn convert_vec2(v: super::Vec2) -> box2d3::Vec2 {
-    box2d3::Vec2{x: v.x, y: v.y}
+    box2d3::Vec2 { x: v.x, y: v.y }
 }
 
 fn convert_vec2_back(v: box2d3::Vec2) -> super::Vec2 {
-    super::Vec2{x: v.x, y: v.y}
+    super::Vec2 { x: v.x, y: v.y }
 }
 
 impl super::Engine for Engine {
-    fn add_body(&mut self, def: super::BodyDef) -> Result<(),UnsupportedError> {
+    fn add_body(&mut self, def: super::BodyDef) -> Result<(), UnsupportedError> {
         let mut b2d_def = box2d3::BodyDef::default();
         b2d_def.position = convert_vec2(def.position);
         b2d_def.linear_velocity = convert_vec2(def.linear_velocity);
@@ -41,8 +43,8 @@ impl super::Engine for Engine {
         for shape in def.shapes {
             match shape {
                 super::ShapeDef::Polygon(polygon) => {
-
-                    let hull_verts: Vec<_> = polygon.vertices.iter().copied().map(convert_vec2).collect();
+                    let hull_verts: Vec<_> =
+                        polygon.vertices.iter().copied().map(convert_vec2).collect();
                     let hull = box2d3::shapes::Hull::compute(&hull_verts);
 
                     let shape_def = box2d3::ShapeDef::default();
@@ -65,12 +67,10 @@ impl super::Engine for Engine {
 
     fn draw(&self) {
         let draw_opts = box2d3::debug_draw::DebugDraw::<()> {
-            draw_polygon: |_, _, _, _| {
-                println!("draw_polygon")
-            },
+            draw_polygon: |_, _, _, _| println!("draw_polygon"),
             draw_solid_polygon: |xform, verts, vert_count, radius, color, draw| {
                 let vert_count = vert_count as usize;
-                let mut vert_buffer = [super::Vec2::ZERO;8];
+                let mut vert_buffer = [super::Vec2::ZERO; 8];
                 assert!(vert_count < vert_buffer.len());
 
                 unsafe {
@@ -82,38 +82,22 @@ impl super::Engine for Engine {
                     let color = Color::from_hex(color.to_uint());
                     let base = vert_buffer[0];
 
-                    for i in 1..vert_count-1 {
-                        draw_triangle(base,vert_buffer[i],vert_buffer[i+1],color);
+                    for i in 1..vert_count - 1 {
+                        draw_triangle(base, vert_buffer[i], vert_buffer[i + 1], color);
                     }
                 }
             },
-            draw_circle: |_, _, _, _| {
-                println!("draw_circle")
-            },
-            draw_solid_circle: |_, _, _, _| {
-                println!("draw_solid_circle")
-            },
-            draw_capsule: |_, _, _, _, _| {
-                println!("draw_capsule")
-            },
-            draw_solid_capsule: |_, _, _, _, _| {
-                println!("draw_solid_capsule")
-            },
-            draw_segment: |_, _, _, _| {
-                println!("draw_segment")
-            },
-            draw_transform: |_, _| {
-                println!("draw_transform")
-            },
-            draw_point: |_, _, _, _| {
-                println!("draw_point")
-            },
-            draw_string: |_, _, _| {
-                println!("draw_string")
-            },
+            draw_circle: |_, _, _, _| println!("draw_circle"),
+            draw_solid_circle: |_, _, _, _| println!("draw_solid_circle"),
+            draw_capsule: |_, _, _, _, _| println!("draw_capsule"),
+            draw_solid_capsule: |_, _, _, _, _| println!("draw_solid_capsule"),
+            draw_segment: |_, _, _, _| println!("draw_segment"),
+            draw_transform: |_, _| println!("draw_transform"),
+            draw_point: |_, _, _, _| println!("draw_point"),
+            draw_string: |_, _, _| println!("draw_string"),
             drawing_bounds: box2d3::math::AABB {
-                lower_bound: box2d3::Vec2{x: 0.0, y: 0.0},
-                upper_bound: box2d3::Vec2{x: 0.0, y: 0.0},
+                lower_bound: box2d3::Vec2 { x: 0.0, y: 0.0 },
+                upper_bound: box2d3::Vec2 { x: 0.0, y: 0.0 },
             },
             use_drawing_bounds: false,
             draw_shapes: true,
