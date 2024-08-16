@@ -1,2 +1,3 @@
 /target
 *.wasm
+testbed/web/testbed.js
