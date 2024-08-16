@@ -1,6 +1,8 @@
 mod box2d3;
 
-use macroquad::math::Vec2;
+use crate::renderer::Renderer;
+
+use super::Vec2;
 
 #[derive(Debug)]
 pub struct UnsupportedError(&'static str);
@@ -22,7 +24,7 @@ pub trait Engine {
 
     fn step(&self, dt: f32, steps: u32);
 
-    fn draw(&self);
+    fn draw(&self, render: &mut Renderer);
 }
 
 pub struct Polygon {

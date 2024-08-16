@@ -1,5 +1,5 @@
 fn main() {
-    println!("cargo:rustc-link-lib=static=Box2D");
+    println!("cargo:rustc-link-lib=static=box2d");
     if let Some(path) = std::env::var("BOX2D_LIB_DIR").ok() {
         println!("cargo:rustc-link-search=native={}", path);
     } else {

@@ -1,40 +1,11 @@
-use std::ops::{Add, Div, Mul, Neg, Sub};
+// copied from wrapped2d
+
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 
 #[repr(C)]
 pub struct AABB {
     pub lower_bound: Vec2,
     pub upper_bound: Vec2
-}
-
-macro_rules! forward_ref_binop {
-    (impl $imp:ident, $method:ident for $t:ty, $u:ty) => {
-        impl<'a> $imp<$u> for &'a $t {
-            type Output = <$t as $imp<$u>>::Output;
-
-            #[inline]
-            fn $method(self, other: $u) -> <$t as $imp<$u>>::Output {
-                $imp::$method(*self, other)
-            }
-        }
-
-        impl<'a> $imp<&'a $u> for $t {
-            type Output = <$t as $imp<$u>>::Output;
-
-            #[inline]
-            fn $method(self, other: &'a $u) -> <$t as $imp<$u>>::Output {
-                $imp::$method(self, *other)
-            }
-        }
-
-        impl<'a, 'b> $imp<&'a $u> for &'b $t {
-            type Output = <$t as $imp<$u>>::Output;
-
-            #[inline]
-            fn $method(self, other: &'a $u) -> <$t as $imp<$u>>::Output {
-                $imp::$method(*self, *other)
-            }
-        }
-    };
 }
 
 #[repr(C)]
@@ -45,181 +16,30 @@ pub struct Vec2 {
 }
 
 impl Vec2 {
-    pub fn sqr_norm(&self) -> f32 {
-        self.x * self.x + self.y * self.y
-    }
+    pub const ZERO: Self = Self {x: 0.0, y: 0.0};
 
-    pub fn norm(&self) -> f32 {
-        self.sqr_norm().sqrt()
-    }
-
-    pub fn sqew(&self) -> Vec2 {
-        Vec2 {
-            x: -self.y,
-            y: self.x,
-        }
-    }
-}
-
-impl From<Vec2> for [f32; 2] {
-    fn from(v: Vec2) -> [f32; 2] {
-        [v.x, v.y]
-    }
-}
-
-impl From<[f32; 2]> for Vec2 {
-    fn from(v: [f32; 2]) -> Vec2 {
-        Vec2 { x: v[0], y: v[1] }
-    }
-}
-
-#[cfg(feature = "nalgebra")]
-impl From<Vec2> for nalgebra::Vector2<f32> {
-    fn from(v: Vec2) -> nalgebra::Vector2<f32> {
-        nalgebra::Vector2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "nalgebra")]
-impl From<nalgebra::Vector2<f32>> for Vec2 {
-    fn from(v: nalgebra::Vector2<f32>) -> Vec2 {
-        Vec2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "nalgebra")]
-impl From<Vec2> for nalgebra::Point2<f32> {
-    fn from(v: Vec2) -> nalgebra::Point2<f32> {
-        nalgebra::Point2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "nalgebra")]
-impl From<nalgebra::Point2<f32>> for Vec2 {
-    fn from(v: nalgebra::Point2<f32>) -> Vec2 {
-        Vec2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "cgmath")]
-impl From<Vec2> for cgmath::Vector2<f32> {
-    fn from(v: Vec2) -> cgmath::Vector2<f32> {
-        cgmath::Vector2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "cgmath")]
-impl From<cgmath::Vector2<f32>> for Vec2 {
-    fn from(v: cgmath::Vector2<f32>) -> Vec2 {
-        Vec2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "cgmath")]
-impl From<Vec2> for cgmath::Point2<f32> {
-    fn from(v: Vec2) -> cgmath::Point2<f32> {
-        cgmath::Point2 { x: v.x, y: v.y }
-    }
-}
-
-#[cfg(feature = "cgmath")]
-impl From<cgmath::Point2<f32>> for Vec2 {
-    fn from(v: cgmath::Point2<f32>) -> Vec2 {
-        Vec2 { x: v.x, y: v.y }
+    pub fn new(x: f32, y: f32) -> Self {
+        Self {x, y}
     }
 }
 
 impl Add for Vec2 {
-    type Output = Vec2;
-
-    fn add(self, other: Vec2) -> Vec2 {
-        Vec2 {
-            x: self.x + other.x,
-            y: self.y + other.y,
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y
         }
     }
 }
 
-forward_ref_binop! { impl Add, add for Vec2, Vec2 }
-
-impl Sub for Vec2 {
-    type Output = Vec2;
-
-    fn sub(self, other: Vec2) -> Vec2 {
-        Vec2 {
-            x: self.x - other.x,
-            y: self.y - other.y,
-        }
+impl AddAssign for Vec2 {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
     }
 }
 
-forward_ref_binop! { impl Sub, sub for Vec2, Vec2 }
-
-impl Mul<f32> for Vec2 {
-    type Output = Vec2;
-
-    fn mul(self, factor: f32) -> Vec2 {
-        Vec2 {
-            x: self.x * factor,
-            y: self.y * factor,
-        }
-    }
-}
-
-forward_ref_binop! { impl Mul, mul for Vec2, f32 }
-
-impl Div<f32> for Vec2 {
-    type Output = Vec2;
-
-    fn div(self, factor: f32) -> Vec2 {
-        Vec2 {
-            x: self.x / factor,
-            y: self.y / factor,
-        }
-    }
-}
-
-forward_ref_binop! { impl Div, div for Vec2, f32 }
-
-impl Neg for Vec2 {
-    type Output = Vec2;
-
-    fn neg(self) -> Vec2 {
-        Vec2 {
-            x: -self.x,
-            y: -self.y,
-        }
-    }
-}
-
-impl<'a> Neg for &'a Vec2 {
-    type Output = Vec2;
-
-    fn neg(self) -> Vec2 {
-        Vec2 {
-            x: -self.x,
-            y: -self.y,
-        }
-    }
-}
-
-pub fn cross_vv(a: Vec2, b: Vec2) -> f32 {
-    a.x * b.y - a.y * b.x
-}
-
-pub fn cross_vs(v: Vec2, s: f32) -> Vec2 {
-    Vec2 {
-        x: s * v.y,
-        y: -s * v.x,
-    }
-}
-
-pub fn cross_sv(s: f32, v: Vec2) -> Vec2 {
-    Vec2 {
-        x: -s * v.y,
-        y: s * v.x,
-    }
-}
 
 #[repr(C)]
 #[derive(Clone, Copy, PartialEq, Debug)]
