@@ -1,6 +1,5 @@
 use box2d3::Vec2;
 use sdl2::event::Event;
-use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::EventPump;
 use sdl2::{render::Canvas, video::Window};
 
@@ -33,12 +32,6 @@ impl Renderer {
     pub fn new() -> Self {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
-
-        {
-            let gl_attr = video_subsystem.gl_attr();
-            gl_attr.set_context_profile(sdl2::video::GLProfile::Core);
-            gl_attr.set_context_version(3, 0);
-        }
 
         let w = 1600;
         let h = 800;
@@ -126,9 +119,9 @@ impl Renderer {
     }
 
     pub fn draw_circle(&mut self, pos: Vec2, radius: f32, color: Color) {
-        let (x, y) = self.pos_to_screen(pos);
+        /*let (x, y) = self.pos_to_screen(pos);
         let rad = self.magnitude_to_screen(radius);
-        self.canvas.filled_circle(x, y, rad, color).unwrap();
+        self.canvas.filled_circle(x, y, rad, color).unwrap();*/
     }
 
     pub fn draw_polygon(&mut self, points: &[Vec2], color: Color) {

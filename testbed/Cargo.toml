@@ -6,10 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sdl2 = { version = "0.34.5", features = ["gfx","use-vcpkg","static-link"] }
+sdl2 = { version = "0.34.5" }
 glow = "0.13.1"
 imgui = "0.12.0"
-imgui-glow-renderer = "0.12.0"
+imgui-glow-renderer = { version = "0.12.0", default-features = false, features = [
+    "gl_extensions_support",
+    # BROKEN: "debug_message_insert_support",
+    "bind_vertex_array_support",
+    "vertex_offset_support",
+    "clip_origin_support",
+    "bind_sampler_support",
+    "polygon_mode_support",
+    "primitive_restart_support",
+]}
 imgui-sdl2-support = "0.12.0"
 
 # Engines
@@ -23,3 +32,6 @@ rev = "2024.05.24"
 
 [package.metadata.vcpkg.target]
 x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
+
+[features]
+native = ["sdl2/use-vcpkg","sdl2/static-link"]
