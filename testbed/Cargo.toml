@@ -33,5 +33,5 @@ rev = "2024.05.24"
 [package.metadata.vcpkg.target]
 x86_64-pc-windows-msvc = { triplet = "x64-windows-static-md" }
 
-[features]
-native = ["sdl2/use-vcpkg","sdl2/static-link"]
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies.sdl2]
+features = ["use-vcpkg","static-link"]
