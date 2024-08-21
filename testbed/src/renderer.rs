@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use box2d3::common::HexColor;
 use box2d3::Vec2;
 use sdl2::event::Event;
@@ -5,6 +7,8 @@ use sdl2::video::Window;
 use sdl2::EventPump;
 
 use glow::{HasContext, NativeBuffer, NativeProgram};
+
+use crate::{engines::ENGINES, PerfInfo};
 
 #[repr(C)]
 struct Vertex {
@@ -199,13 +203,50 @@ impl Renderer {
         }
     }
 
-    pub fn draw_ui(&mut self) {
+    pub fn draw_ui(
+        &mut self,
+        engine_index: &mut usize,
+        test_index: &mut usize,
+        perf_info: &PerfInfo,
+        stop_step: &mut i32,
+    ) -> bool {
         self.imgui_platform
             .prepare_frame(&mut self.imgui, &self.window, &self.event_pump);
 
         let ui = self.imgui.frame();
-        ui.show_demo_window(&mut true);
+
+        let mut reset = false;
+
+        if let Some(wt) = ui
+            .window("Settings")
+            .size([400.0, 300.0], imgui::Condition::Always)
+            .resizable(false)
+            .begin()
+        {
+            //ui.set_column_width(1, 200.0);
+            let w = ui.push_item_width(200.0);
+
+            ui.label_text("Step Time", format!("{:.2} ms", perf_info.step_time));
+            ui.label_text(
+                "Step Time (Avg. All)",
+                format!("{:.2} ms", perf_info.step_sum / perf_info.step_count as f64),
+            );
+            ui.label_text("Step Count", format!("{}", perf_info.step_count));
+
+            ui.input_int("Stop at Step", stop_step).build();
+
+            reset |= ui.combo("Engine", engine_index, &ENGINES, |(name, _)| {
+                Cow::Borrowed(name)
+            });
+
+            reset |= ui.button("Reset");
+
+            w.end();
+            wt.end();
+        }
 
         self.imgui_render.render(self.imgui.render()).unwrap();
+
+        reset
     }
 }

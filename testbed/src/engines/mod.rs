@@ -7,17 +7,13 @@ use super::Vec2;
 #[derive(Debug)]
 pub struct UnsupportedError(&'static str);
 
-static ENGINE_CTORS: &[(&str, fn() -> Box<dyn Engine>)] =
-    &[("box2d3", || Box::new(box2d3::Engine::new()))];
-
-pub fn init_engine(name: &str) -> Option<Box<dyn Engine>> {
-    for (n, f) in ENGINE_CTORS {
-        if *n == name {
-            return Some(f());
-        }
-    }
-    None
-}
+pub static ENGINES: &[(&str, fn() -> Box<dyn Engine>)] = &[
+    ("Box2D 3.0.0 (box2d3)", || Box::new(box2d3::Engine::new())),
+    (
+        "Box2D 2.3.1 (wrapped2d)",
+        || Box::new(box2d3::Engine::new()),
+    ),
+];
 
 pub trait Engine {
     fn add_body(&mut self, def: BodyDef) -> Result<(), UnsupportedError>;

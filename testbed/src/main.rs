@@ -1,13 +1,16 @@
 use std::cell::RefCell;
 use std::time::Instant;
 
-use engines::{init_engine, BodyDef, Engine, Polygon};
+use engines::{BodyDef, Engine, Polygon, ENGINES};
 
 // use box2d3 vectors for config
 use box2d3::{common::HexColor, Vec2};
 use renderer::Renderer;
+use tests::start_test;
 
 mod engines;
+mod tests;
+
 mod renderer;
 
 const START_PAUSED: bool = false;
@@ -15,43 +18,22 @@ const DELTA_TIME: f32 = 1.0 / 60.0;
 const STEPS: u32 = 5;
 
 fn main() {
-    let mut engine = init_engine("box2d3").unwrap();
+    let engine_index = 0;
+    let test_index = 0;
 
-    let size = 50;
-    {
-        let offset = size as f32 / 2.0;
-
-        for x in 0..size {
-            for y in 0..size {
-                engine
-                    .add_body(BodyDef::new(
-                        Vec2::new((x as f32 - offset) * 2.0 + 1.0, y as f32 - offset + 20.0),
-                        vec![Polygon::new_box(1.0, 1.0).into()],
-                    ))
-                    .unwrap();
-            }
-        }
-    }
-
-    // ground
-    engine
-        .add_body(
-            BodyDef::new(
-                Vec2::new(0.0, 0.0),
-                vec![Polygon::new_box(100.0, 50.0)
-                    .offset(Vec2::new(0.0, -50.0))
-                    .into()],
-            )
-            .set_static(),
-        )
-        .unwrap();
+    let mut engine = ENGINES[engine_index].1();
+    start_test(engine.as_mut());
 
     let render = Renderer::new();
 
     run_loop(State {
+        engine_index,
+        test_index,
         render,
         engine,
         running: !START_PAUSED,
+        perf_info: Default::default(),
+        stop_step: 1000,
     });
 }
 
@@ -62,7 +44,11 @@ thread_local! {
 struct State {
     running: bool,
     engine: Box<dyn Engine>,
+    engine_index: usize,
+    test_index: usize,
     render: Renderer,
+    perf_info: PerfInfo,
+    stop_step: i32,
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -96,14 +82,22 @@ fn run_loop(mut state: State) {
 fn loop_inner(state: &mut State) {
     state.render.poll_events();
 
-    let sim_time = if state.running {
+    if state.running {
         let t = get_time_ms();
         state.engine.step(DELTA_TIME, STEPS);
-        Some(get_time_ms() - t)
+        let step_time = get_time_ms() - t;
+
+        let f = 0.1;
+        state.perf_info.step_time = state.perf_info.step_time * (1.0 - f) + step_time * f;
+        state.perf_info.step_sum += step_time;
+        state.perf_info.step_count += 1;
+
+        if state.perf_info.step_count >= state.stop_step as usize {
+            state.running = false;
+        }
     } else {
-        None
-    };
-    //println!("{:?}", sim_time);
+        state.perf_info.step_time = 0.0;
+    }
 
     state.render.clear(HexColor::new(0x111111));
 
@@ -111,9 +105,27 @@ fn loop_inner(state: &mut State) {
 
     state.render.draw_buffered_shapes(0.01);
 
-    state.render.draw_ui();
+    let reset = state.render.draw_ui(
+        &mut state.engine_index,
+        &mut state.test_index,
+        &state.perf_info,
+        &mut state.stop_step,
+    );
 
     state.render.present();
+
+    if reset {
+        reset_state(state);
+    }
+}
+
+fn reset_state(state: &mut State) {
+    let mut new_engine = ENGINES[state.engine_index].1();
+    start_test(new_engine.as_mut());
+
+    state.engine = new_engine;
+    state.perf_info = Default::default();
+    state.running = true;
 }
 
 #[cfg(target_arch = "wasm32")]
@@ -131,4 +143,11 @@ pub fn get_time_ms() -> f64 {
 
     let start = START.get_or_init(|| Instant::now());
     start.elapsed().as_secs_f64() * 1000.0
+}
+
+#[derive(Default)]
+struct PerfInfo {
+    step_time: f64,
+    step_sum: f64,
+    step_count: usize,
 }
