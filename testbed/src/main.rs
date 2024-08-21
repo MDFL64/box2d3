@@ -109,7 +109,7 @@ fn loop_inner(state: &mut State) {
 
     state.engine.draw(&mut state.render);
 
-    state.render.draw_buffered_shapes();
+    state.render.draw_buffered_shapes(0.01);
 
     state.render.draw_ui();
 
