@@ -7,7 +7,6 @@
 use box2d3::common::HexColor;
 
 use crate::renderer::Renderer;
-use crate::Color;
 
 use super::UnsupportedError;
 
@@ -61,12 +60,8 @@ impl super::Engine for Engine {
     }
 
     fn draw(&self, render: &mut Renderer) {
-        fn convert_color(color: HexColor) -> Color {
-            let n = color.to_uint();
-            let r = n >> 16;
-            let g = n >> 8;
-            let b = n >> 0;
-            Color::RGB(r as u8, g as u8, b as u8)
+        fn convert_color(color: HexColor) -> HexColor {
+            color
         }
 
         let draw_opts = box2d3::debug_draw::DebugDraw::<Renderer> {

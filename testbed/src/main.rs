@@ -4,8 +4,8 @@ use std::time::Instant;
 use engines::{init_engine, BodyDef, Engine, Polygon};
 
 // use box2d3 vectors for config
-use box2d3::Vec2;
-use renderer::{Color, Renderer};
+use box2d3::{common::HexColor, Vec2};
+use renderer::Renderer;
 
 mod engines;
 mod renderer;
@@ -103,11 +103,13 @@ fn loop_inner(state: &mut State) {
     } else {
         None
     };
-    println!("{:?}", sim_time);
+    //println!("{:?}", sim_time);
 
-    state.render.clear(Color::RGB(10, 10, 10));
+    state.render.clear(HexColor::new(0x111111));
 
     state.engine.draw(&mut state.render);
+
+    state.render.draw_buffered_shapes();
 
     state.render.draw_ui();
 

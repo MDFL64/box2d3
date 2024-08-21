@@ -1,25 +1,21 @@
+use box2d3::common::HexColor;
 use box2d3::Vec2;
 use sdl2::event::Event;
 use sdl2::EventPump;
-use sdl2::{render::Canvas, video::Window};
+use sdl2::video::Window;
 
-use glow::HasContext;
-
-pub use sdl2::pixels::Color;
+use glow::{HasContext, NativeBuffer, NativeProgram};
 
 pub struct Renderer {
-    canvas: Canvas<Window>,
+    window: Window,
     event_pump: EventPump,
     imgui: imgui::Context,
     imgui_platform: imgui_sdl2_support::SdlPlatform,
     imgui_render: imgui_glow_renderer::AutoRenderer,
-    // if we don't safe a reference to this, imgui will break
+    // if we don't save a reference to this, imgui will break
     _gl_context: sdl2::video::GLContext,
-    window_w: u32,
-    window_h: u32,
-    scale: f32,
-    buffer_x: Vec<i16>,
-    buffer_y: Vec<i16>,
+    draw_program: NativeProgram,
+    draw_buffer: NativeBuffer
 }
 
 fn glow_context(window: &sdl2::video::Window) -> glow::Context {
@@ -52,23 +48,56 @@ impl Renderer {
         let imgui_platform = imgui_sdl2_support::SdlPlatform::init(&mut imgui);
 
         let gl = glow_context(&window);
+        // gl setup
+        let draw_buffer;
+        let draw_program;
+        unsafe {
+            let data: [f32;9] = [
+                -0.5, -0.5, 0.0,
+                0.5, -0.5, 0.0,
+                0.0,  0.5, 0.0
+            ];
+            let data_bytes: [u8;36] = std::mem::transmute(data);
+
+            draw_buffer = gl.create_buffer().unwrap();
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(draw_buffer));
+            gl.buffer_data_u8_slice(glow::ARRAY_BUFFER, &data_bytes, glow::STATIC_DRAW);
+
+            let shader_vertex = gl.create_shader(glow::VERTEX_SHADER).unwrap();
+            gl.shader_source(shader_vertex, include_str!("vertex.glsl"));
+            gl.compile_shader(shader_vertex);
+
+            let shader_fragment = gl.create_shader(glow::FRAGMENT_SHADER).unwrap();
+            gl.shader_source(shader_fragment, include_str!("fragment.glsl"));
+            gl.compile_shader(shader_fragment);
+
+            draw_program = gl.create_program().unwrap();
+            gl.attach_shader(draw_program, shader_vertex);
+            gl.attach_shader(draw_program, shader_fragment);
+            gl.link_program(draw_program);
+
+            let link_status = gl.get_program_link_status(draw_program);
+            if !link_status {
+                let log = gl.get_program_info_log(draw_program);
+                println!("{}",log);
+                panic!("shader compile failed");
+            }
+        }
+
         let imgui_render = imgui_glow_renderer::AutoRenderer::initialize(gl, &mut imgui).unwrap();
 
-        let canvas = window.into_canvas().build().unwrap();
+        //let canvas = window.into_canvas().build().unwrap();
         let event_pump = sdl_context.event_pump().unwrap();
 
         Renderer {
-            canvas,
+            window,
             event_pump,
             imgui,
             imgui_platform,
             imgui_render,
             _gl_context: gl_context,
-            window_w: w,
-            window_h: h,
-            scale: 10.0,
-            buffer_x: vec![],
-            buffer_y: vec![],
+            draw_buffer,
+            draw_program
         }
     }
 
@@ -84,17 +113,14 @@ impl Renderer {
         }
     }
 
-    pub fn clear(&mut self, color: Color) {
+    pub fn clear(&mut self, color: HexColor) {
         //self.canvas.set_draw_color(color);
         //self.canvas.clear();
 
         let gl = self.imgui_render.gl_context();
         unsafe {
-            let r = color.r as f32 / 255.0;
-            let g = color.g as f32 / 255.0;
-            let b = color.b as f32 / 255.0;
-            let a = color.a as f32 / 255.0;
-            gl.clear_color(r, g, b, a);
+            let [r,g,b] = color.to_floats();
+            gl.clear_color(r, g, b, 1.0);
             gl.clear(glow::COLOR_BUFFER_BIT);
         }
 
@@ -105,26 +131,28 @@ impl Renderer {
     }
 
     pub fn present(&mut self) {
-        self.canvas.window().gl_swap_window();
+        self.window.gl_swap_window();
     }
 
     fn pos_to_screen(&self, pos: Vec2) -> (i16, i16) {
-        let x = (pos.x * self.scale) as i16 + (self.window_w / 2) as i16;
+        /*let x = (pos.x * self.scale) as i16 + (self.window_w / 2) as i16;
         let y = (pos.y * -self.scale) as i16 + (self.window_h / 2) as i16;
-        return (x, y);
+        return (x, y);*/
+        (0,0)
     }
 
     fn magnitude_to_screen(&self, n: f32) -> i16 {
-        (n * self.scale) as i16
+        //(n * self.scale) as i16
+        0
     }
 
-    pub fn draw_circle(&mut self, pos: Vec2, radius: f32, color: Color) {
+    pub fn draw_circle(&mut self, pos: Vec2, radius: f32, color: HexColor) {
         /*let (x, y) = self.pos_to_screen(pos);
         let rad = self.magnitude_to_screen(radius);
         self.canvas.filled_circle(x, y, rad, color).unwrap();*/
     }
 
-    pub fn draw_polygon(&mut self, points: &[Vec2], color: Color) {
+    pub fn draw_polygon(&mut self, points: &[Vec2], color: HexColor) {
         /*self.buffer_x.resize(points.len(), 0);
         self.buffer_y.resize(points.len(), 0);
 
@@ -140,9 +168,26 @@ impl Renderer {
             .unwrap();*/
     }
 
+    /// Draw shape geometry buffered by other calls
+    pub fn draw_buffered_shapes(&self) {
+        let gl = self.imgui_render.gl_context();
+        let (w,h) = self.window.drawable_size();
+        let aspect = w as f32 / h as f32;
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.draw_buffer));
+            gl.enable_vertex_attrib_array(0);
+            gl.vertex_attrib_pointer_f32(0, 3, glow::FLOAT, false, 12, 0);
+            gl.use_program(Some(self.draw_program));
+            let scale_loc = gl.get_uniform_location(self.draw_program, "scale").unwrap();
+            gl.uniform_2_f32(Some(&scale_loc), 0.1, 0.1 * aspect);
+
+            gl.draw_arrays(glow::TRIANGLES, 0, 3);
+        }
+    }
+
     pub fn draw_ui(&mut self) {
         self.imgui_platform
-            .prepare_frame(&mut self.imgui, self.canvas.window(), &self.event_pump);
+            .prepare_frame(&mut self.imgui, &self.window, &self.event_pump);
 
         let ui = self.imgui.frame();
         ui.show_demo_window(&mut true);
