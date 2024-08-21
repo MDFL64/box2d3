@@ -14,6 +14,14 @@ impl HexColor {
         Self(hex)
     }
 
+    pub fn new_from_floats(r: f32, g: f32, b: f32) -> Self {
+        let r = (r * 255.0) as u32;
+        let g = (g * 255.0) as u32;
+        let b = (b * 255.0) as u32;
+
+        Self((r << 16) | (g << 8) | (b << 0))
+    }
+
     pub fn to_uint(&self) -> u32 {
         self.0
     }

@@ -1,4 +1,5 @@
 mod box2d3;
+mod wrapped2d;
 
 use crate::renderer::Renderer;
 
@@ -11,16 +12,16 @@ pub static ENGINES: &[(&str, fn() -> Box<dyn Engine>)] = &[
     ("Box2D 3.0.0 (box2d3)", || Box::new(box2d3::Engine::new())),
     (
         "Box2D 2.3.1 (wrapped2d)",
-        || Box::new(box2d3::Engine::new()),
+        || Box::new(wrapped2d::Engine::new()),
     ),
 ];
 
 pub trait Engine {
     fn add_body(&mut self, def: BodyDef) -> Result<(), UnsupportedError>;
 
-    fn step(&self, dt: f32, steps: u32);
+    fn step(&mut self, dt: f32, steps: u32);
 
-    fn draw(&self, render: &mut Renderer);
+    fn draw(&mut self, render: &mut Renderer);
 }
 
 pub struct Polygon {

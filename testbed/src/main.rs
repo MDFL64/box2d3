@@ -18,7 +18,7 @@ const DELTA_TIME: f32 = 1.0 / 60.0;
 const STEPS: u32 = 5;
 
 fn main() {
-    let engine_index = 0;
+    let engine_index = 1;
     let test_index = 0;
 
     let mut engine = ENGINES[engine_index].1();

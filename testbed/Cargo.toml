@@ -23,6 +23,7 @@ imgui-sdl2-support = "0.12.0"
 
 # Engines
 box2d3 = { path = ".." }
+wrapped2d = "0.4.2"
 
 # For windows builds
 [package.metadata.vcpkg]

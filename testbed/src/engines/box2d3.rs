@@ -1,9 +1,3 @@
-/*use macroquad::{
-    color::Color,
-    models::draw_mesh,
-    shapes::{draw_poly, draw_triangle},
-};*/
-
 use box2d3::common::HexColor;
 
 use crate::renderer::Renderer;
@@ -55,18 +49,14 @@ impl super::Engine for Engine {
         Ok(())
     }
 
-    fn step(&self, dt: f32, steps: u32) {
+    fn step(&mut self, dt: f32, steps: u32) {
         self.world.step(dt, steps);
     }
 
-    fn draw(&self, render: &mut Renderer) {
-        fn convert_color(color: HexColor) -> HexColor {
-            color
-        }
-
+    fn draw(&mut self, render: &mut Renderer) {
         let draw_opts = box2d3::debug_draw::DebugDraw::<Renderer> {
             draw_polygon: |_, _, _, _| println!("draw_polygon"),
-            draw_solid_polygon: |xform, verts, vert_count, radius, color, render| {
+            draw_solid_polygon: |xform, verts, vert_count, _radius, color, render| {
                 let render: &mut Renderer = unsafe { std::mem::transmute(render) };
 
                 let vert_count = vert_count as usize;
@@ -80,7 +70,7 @@ impl super::Engine for Engine {
                     }
                 }
 
-                render.draw_polygon(&vert_buffer[..(vert_count as usize)], convert_color(color));
+                render.draw_polygon(&vert_buffer[..(vert_count as usize)], color);
             },
             draw_circle: |_, _, _, _| println!("draw_circle"),
             draw_solid_circle: |_, _, _, _| println!("draw_solid_circle"),
