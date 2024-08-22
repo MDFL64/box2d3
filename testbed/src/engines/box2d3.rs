@@ -1,4 +1,4 @@
-use box2d3::common::HexColor;
+use box2d3::shapes::Circle;
 
 use crate::renderer::Renderer;
 
@@ -14,6 +14,12 @@ impl Engine {
         let world = box2d3::World::new(&world_def);
 
         Self { world }
+    }
+}
+
+impl Drop for Engine {
+    fn drop(&mut self) {
+        self.world.clone().destroy();
     }
 }
 
@@ -43,8 +49,18 @@ impl super::Engine for Engine {
 
                     new_body.create_shape_polygon(&shape_def, &polygon);
                 }
-                super::ShapeDef::Circle => {
-                    return Err(UnsupportedError("circle shapes"));
+                super::ShapeDef::Circle(circle) => {
+                    let mut shape_def = box2d3::ShapeDef::default();
+                    shape_def.friction = def.friction;
+                    shape_def.restitution = def.restitution;
+
+                    new_body.create_shape_circle(
+                        &shape_def,
+                        &Circle {
+                            center: circle.offset,
+                            radius: circle.radius,
+                        },
+                    );
                 }
             }
         }
@@ -58,9 +74,8 @@ impl super::Engine for Engine {
 
     fn draw(&mut self, render: &mut Renderer) {
         let draw_opts = box2d3::debug_draw::DebugDraw::<Renderer> {
-            draw_polygon: |_, _, _, _| println!("draw_polygon"),
             draw_solid_polygon: |xform, verts, vert_count, _radius, color, render| {
-                let render: &mut Renderer = unsafe { std::mem::transmute(render) };
+                let render = unsafe { render.as_mut().unwrap() };
 
                 let vert_count = vert_count as usize;
                 let mut vert_buffer = [super::Vec2::ZERO; 8];
@@ -75,8 +90,13 @@ impl super::Engine for Engine {
 
                 render.draw_polygon(&vert_buffer[..(vert_count as usize)], color);
             },
+            draw_solid_circle: |xform, radius, color, render| {
+                let render = unsafe { render.as_mut().unwrap() };
+
+                render.draw_circle(xform.pos, xform.rot.angle(), radius, color);
+            },
+            draw_polygon: |_, _, _, _| println!("draw_polygon"),
             draw_circle: |_, _, _, _| println!("draw_circle"),
-            draw_solid_circle: |_, _, _, _| println!("draw_solid_circle"),
             draw_capsule: |_, _, _, _, _| println!("draw_capsule"),
             draw_solid_capsule: |_, _, _, _, _| println!("draw_solid_capsule"),
             draw_segment: |_, _, _, _| println!("draw_segment"),

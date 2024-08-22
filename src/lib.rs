@@ -1,16 +1,16 @@
 pub mod math;
 use std::marker::PhantomData;
 
-pub mod common;
-pub mod world;
 pub mod body;
-pub mod shapes;
+pub mod common;
 pub mod debug_draw;
+pub mod shapes;
+pub mod world;
 
 /// Used to mark our handles as !Send and !Sync for some attempt at thread safety.
 type PhantomNoSend = PhantomData<*mut ()>;
 
-pub use math::Vec2;
-pub use world::{World, WorldDef};
 pub use body::{Body, BodyDef};
+pub use math::Vec2;
 pub use shapes::{Shape, ShapeDef};
+pub use world::{World, WorldDef};

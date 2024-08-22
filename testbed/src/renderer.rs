@@ -1,3 +1,4 @@
+use core::f32;
 use std::borrow::Cow;
 
 use box2d3::common::HexColor;
@@ -133,10 +134,45 @@ impl Renderer {
         self.window.gl_swap_window();
     }
 
-    pub fn draw_circle(&mut self, pos: Vec2, radius: f32, color: HexColor) {
-        /*let (x, y) = self.pos_to_screen(pos);
-        let rad = self.magnitude_to_screen(radius);
-        self.canvas.filled_circle(x, y, rad, color).unwrap();*/
+    pub fn draw_circle(&mut self, pos: Vec2, angle: f32, radius: f32, color: HexColor) {
+        let [r, g, b] = color.to_floats();
+
+        const VERT_COUNT: usize = 16;
+        fn vert_angle(x: usize) -> f32 {
+            (x as f32 / VERT_COUNT as f32) * f32::consts::PI * 2.0
+        }
+
+        let base = pos;
+
+        for i in 0..VERT_COUNT {
+            let p1 = pos + Vec2::new(vert_angle(i).cos() * radius, vert_angle(i).sin() * radius);
+            let p2 = pos
+                + Vec2::new(
+                    vert_angle(i + 1).cos() * radius,
+                    vert_angle(i + 1).sin() * radius,
+                );
+            self.buffer.push(Vertex {
+                x: base.x,
+                y: base.y,
+                r,
+                g,
+                b,
+            });
+            self.buffer.push(Vertex {
+                x: p1.x,
+                y: p1.y,
+                r: r * 0.5,
+                g: g * 0.5,
+                b: b * 0.5,
+            });
+            self.buffer.push(Vertex {
+                x: p2.x,
+                y: p2.y,
+                r: r * 0.5,
+                g: g * 0.5,
+                b: b * 0.5,
+            });
+        }
     }
 
     pub fn draw_polygon(&mut self, points: &[Vec2], color: HexColor) {

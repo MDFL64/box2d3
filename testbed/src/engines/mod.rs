@@ -35,7 +35,7 @@ pub struct Circle {
 
 pub enum ShapeDef {
     Polygon(Polygon),
-    Circle,
+    Circle(Circle),
 }
 
 enum BodyKind {
@@ -116,8 +116,23 @@ impl Polygon {
     }
 }
 
+impl Circle {
+    pub fn new(radius: f32) -> Self {
+        Circle {
+            radius,
+            offset: Vec2::ZERO,
+        }
+    }
+}
+
 impl From<Polygon> for ShapeDef {
     fn from(inner_shape: Polygon) -> Self {
         ShapeDef::Polygon(inner_shape)
+    }
+}
+
+impl From<Circle> for ShapeDef {
+    fn from(inner_shape: Circle) -> Self {
+        ShapeDef::Circle(inner_shape)
     }
 }

@@ -43,16 +43,16 @@ pub struct ShapeDef {
     pub force_contact_creation: bool,
 
     /// Used internally to detect a valid definition. DO NOT SET.
-    _cookie: u32
+    _cookie: u32,
 }
 
 #[repr(C)]
-#[derive(Copy,Clone)]
+#[derive(Copy, Clone)]
 pub struct Shape {
     index: u32,
     world: u16,
     revision: u16,
-    _thread_unsafe: PhantomNoSend
+    _thread_unsafe: PhantomNoSend,
 }
 
 const MAX_POLYGON_VERTICES: usize = 8;
@@ -62,57 +62,54 @@ const MAX_POLYGON_VERTICES: usize = 8;
 #[repr(C)]
 pub struct Polygon {
     /// The polygon vertices
-	vertices: [Vec2; MAX_POLYGON_VERTICES],
+    vertices: [Vec2; MAX_POLYGON_VERTICES],
 
-	/// The outward normal vectors of the polygon sides
-	normals: [Vec2; MAX_POLYGON_VERTICES],
+    /// The outward normal vectors of the polygon sides
+    normals: [Vec2; MAX_POLYGON_VERTICES],
 
-	/// The centroid of the polygon
-	centroid: Vec2,
+    /// The centroid of the polygon
+    centroid: Vec2,
 
-	/// The external radius for rounded polygons
-	radius: f32,
+    /// The external radius for rounded polygons
+    radius: f32,
 
-	/// The number of polygon vertices
-	vertex_count: u32
+    /// The number of polygon vertices
+    vertex_count: u32,
 }
 
 #[derive(Debug)]
 #[repr(C)]
 pub struct Hull {
     points: [Vec2; MAX_POLYGON_VERTICES],
-    point_count: u32
+    point_count: u32,
+}
+
+#[derive(Debug)]
+#[repr(C)]
+pub struct Circle {
+    pub center: Vec2,
+    pub radius: f32,
 }
 
 impl Default for ShapeDef {
     fn default() -> Self {
-        unsafe {
-            b2DefaultShapeDef()
-        }
+        unsafe { b2DefaultShapeDef() }
     }
 }
 
-impl Shape {
-
-}
+impl Shape {}
 
 impl Polygon {
     pub fn new_box(hx: f32, hy: f32) -> Self {
-        unsafe {
-            b2MakeBox(hx,hy)
-        }
+        unsafe { b2MakeBox(hx, hy) }
     }
 
     pub fn new_box_ex(hx: f32, hy: f32, center: Vec2, angle: f32) -> Self {
-        unsafe {
-            b2MakeOffsetBox(hx,hy,center,angle)
-        }
+        unsafe { b2MakeOffsetBox(hx, hy, center, angle) }
     }
 
     pub fn new(hull: &Hull, radius: f32) -> Self {
-        unsafe {
-            b2MakePolygon(hull, radius)
-        }
+        unsafe { b2MakePolygon(hull, radius) }
     }
 }
 
@@ -120,9 +117,7 @@ impl Hull {
     pub fn compute(points: &[Vec2]) -> Self {
         // sanity check to avoid issues with the conversion to u32
         assert!(points.len() < 1000);
-        unsafe {
-            b2ComputeHull(points.as_ptr(),points.len() as u32)
-        }
+        unsafe { b2ComputeHull(points.as_ptr(), points.len() as u32) }
     }
 }
 

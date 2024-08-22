@@ -45,21 +45,23 @@ impl super::Engine for Engine {
         let new_body = self.world.create_body(&b2d_def);
         let mut body = self.world.body_mut(new_body);
         for shape in def.shapes {
-            match shape {
+            let fh = match shape {
                 super::ShapeDef::Polygon(polygon) => {
                     let verts: Vec<_> =
                         polygon.vertices.iter().copied().map(convert_vec2).collect();
                     let polygon = b2::PolygonShape::new_with(&verts);
 
-                    let fh = body.create_fast_fixture(&polygon, 1.0);
-                    let mut fixture = body.fixture_mut(fh);
-                    fixture.set_friction(def.friction);
-                    fixture.set_restitution(def.restitution);
+                    body.create_fast_fixture(&polygon, 1.0)
                 }
-                super::ShapeDef::Circle => {
-                    return Err(UnsupportedError("circle shapes"));
+                super::ShapeDef::Circle(circle) => {
+                    let circle =
+                        b2::CircleShape::new_with(convert_vec2(circle.offset), circle.radius);
+                    body.create_fast_fixture(&circle, 1.0)
                 }
-            }
+            };
+            let mut fixture = body.fixture_mut(fh);
+            fixture.set_friction(def.friction);
+            fixture.set_restitution(def.restitution);
         }
 
         Ok(())
@@ -101,7 +103,13 @@ impl<'a> b2::Draw for DebugDrawer<'a> {
         axis: &b2::Vec2,
         color: &b2::Color,
     ) {
-        println!("solid circle");
+        // axis specifies angle ???
+        self.render.draw_circle(
+            convert_vec2_back(*center),
+            0.0,
+            radius,
+            convert_color(color),
+        );
     }
 
     fn draw_segment(&mut self, p1: &b2::Vec2, p2: &b2::Vec2, color: &b2::Color) {

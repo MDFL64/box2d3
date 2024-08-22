@@ -19,7 +19,7 @@ const STEPS: u32 = 5;
 
 fn main() {
     let engine_index = 0;
-    let test_index = 1;
+    let test_index = 0;
 
     let mut engine = ENGINES[engine_index].1();
     TESTS[test_index].1(engine.as_mut());

@@ -4,7 +4,7 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", path);
     } else {
         let box2d_install_prefix = cmake::Config::new("box2d")
-            .define("CMAKE_MSVC_RUNTIME_LIBRARY","MultiThreaded")
+            .define("CMAKE_MSVC_RUNTIME_LIBRARY", "MultiThreaded")
             .define("BOX2D_SAMPLES", "OFF")
             .define("BOX2D_VALIDATE", "OFF")
             .define("BOX2D_UNIT_TESTS", "OFF")

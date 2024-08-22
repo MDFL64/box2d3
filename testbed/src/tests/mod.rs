@@ -1,4 +1,4 @@
-use crate::engines::{BodyDef, Engine, Polygon};
+use crate::engines::{BodyDef, Circle, Engine, Polygon};
 use crate::Vec2;
 
 pub static TESTS: &[(&str, fn(&mut dyn Engine))] = &[
@@ -85,11 +85,8 @@ pub fn test_mat_props(engine: &mut dyn Engine) {
         let offset = (i as f32) * 4.5;
         engine
             .add_body(
-                BodyDef::new(
-                    Vec2::new(offset - 60.0, 0.0),
-                    vec![Polygon::new_box(2.0, 2.0).into()],
-                )
-                .restitution((i as f32) * 0.2),
+                BodyDef::new(Vec2::new(offset - 60.0, 0.0), vec![Circle::new(2.0).into()])
+                    .restitution((i as f32) * 0.2),
             )
             .unwrap();
     }
