@@ -35,7 +35,10 @@ impl super::Engine for Engine {
                 super::ShapeDef::Polygon(polygon) => {
                     let hull = box2d3::shapes::Hull::compute(&polygon.vertices);
 
-                    let shape_def = box2d3::ShapeDef::default();
+                    let mut shape_def = box2d3::ShapeDef::default();
+                    shape_def.friction = def.friction;
+                    shape_def.restitution = def.restitution;
+
                     let polygon = box2d3::shapes::Polygon::new(&hull, polygon.radius);
 
                     new_body.create_shape_polygon(&shape_def, &polygon);

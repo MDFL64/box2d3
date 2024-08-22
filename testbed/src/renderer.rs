@@ -8,7 +8,7 @@ use sdl2::EventPump;
 
 use glow::{HasContext, NativeBuffer, NativeProgram};
 
-use crate::{engines::ENGINES, PerfInfo};
+use crate::{engines::ENGINES, tests::TESTS, PerfInfo};
 
 #[repr(C)]
 struct Vertex {
@@ -238,6 +238,8 @@ impl Renderer {
             reset |= ui.combo("Engine", engine_index, &ENGINES, |(name, _)| {
                 Cow::Borrowed(name)
             });
+
+            reset |= ui.combo("Test", test_index, &TESTS, |(name, _)| Cow::Borrowed(name));
 
             reset |= ui.button("Reset");
 

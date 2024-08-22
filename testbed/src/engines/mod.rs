@@ -10,10 +10,9 @@ pub struct UnsupportedError(&'static str);
 
 pub static ENGINES: &[(&str, fn() -> Box<dyn Engine>)] = &[
     ("Box2D 3.0.0 (box2d3)", || Box::new(box2d3::Engine::new())),
-    (
-        "Box2D 2.3.1 (wrapped2d)",
-        || Box::new(wrapped2d::Engine::new()),
-    ),
+    ("Box2D 2.3.1 (wrapped2d)", || {
+        Box::new(wrapped2d::Engine::new())
+    }),
 ];
 
 pub trait Engine {
@@ -51,6 +50,8 @@ pub struct BodyDef {
     position: Vec2,
     linear_velocity: Vec2,
     angular_velocity: f32,
+    friction: f32,
+    restitution: f32,
 }
 
 impl BodyDef {
@@ -61,11 +62,23 @@ impl BodyDef {
             position,
             linear_velocity: Vec2::ZERO,
             angular_velocity: 0.0,
+            friction: 0.5,
+            restitution: 0.2,
         }
     }
 
     pub fn set_static(mut self) -> Self {
         self.kind = BodyKind::Static;
+        self
+    }
+
+    pub fn friction(mut self, x: f32) -> Self {
+        self.friction = x;
+        self
+    }
+
+    pub fn restitution(mut self, x: f32) -> Self {
+        self.restitution = x;
         self
     }
 }
@@ -86,6 +99,18 @@ impl Polygon {
     pub fn offset(mut self, offset: Vec2) -> Self {
         for vert in &mut self.vertices {
             *vert += offset;
+        }
+        self
+    }
+
+    pub fn rotate(mut self, degrees: f32) -> Self {
+        let rad = -degrees.to_radians();
+        let s = rad.sin();
+        let c = rad.cos();
+        for vert in &mut self.vertices {
+            let x = vert.x * c - vert.y * s;
+            let y = vert.x * s + vert.y * c;
+            *vert = Vec2 { x, y };
         }
         self
     }

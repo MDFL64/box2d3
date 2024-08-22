@@ -6,7 +6,7 @@ use engines::{BodyDef, Engine, Polygon, ENGINES};
 // use box2d3 vectors for config
 use box2d3::{common::HexColor, Vec2};
 use renderer::Renderer;
-use tests::start_test;
+use tests::TESTS;
 
 mod engines;
 mod tests;
@@ -18,11 +18,11 @@ const DELTA_TIME: f32 = 1.0 / 60.0;
 const STEPS: u32 = 5;
 
 fn main() {
-    let engine_index = 1;
-    let test_index = 0;
+    let engine_index = 0;
+    let test_index = 1;
 
     let mut engine = ENGINES[engine_index].1();
-    start_test(engine.as_mut());
+    TESTS[test_index].1(engine.as_mut());
 
     let render = Renderer::new();
 
@@ -121,7 +121,7 @@ fn loop_inner(state: &mut State) {
 
 fn reset_state(state: &mut State) {
     let mut new_engine = ENGINES[state.engine_index].1();
-    start_test(new_engine.as_mut());
+    TESTS[state.test_index].1(new_engine.as_mut());
 
     state.engine = new_engine;
     state.perf_info = Default::default();

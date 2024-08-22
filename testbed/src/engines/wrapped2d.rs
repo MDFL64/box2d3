@@ -8,32 +8,26 @@ use wrapped2d::b2::{self, DrawFlags};
 use wrapped2d::user_data::NoUserData;
 
 pub struct Engine {
-    world: b2::World<NoUserData>
+    world: b2::World<NoUserData>,
 }
 
 impl Engine {
     pub fn new() -> Self {
-        let world = b2::World::new(&b2::Vec2{x: 0.0, y: -10.0});
+        let world = b2::World::new(&b2::Vec2 { x: 0.0, y: -10.0 });
         Self { world }
     }
 }
 
 fn convert_vec2(v: box2d3::Vec2) -> b2::Vec2 {
-    b2::Vec2{
-        x: v.x,
-        y: v.y
-    }
+    b2::Vec2 { x: v.x, y: v.y }
 }
 
 fn convert_vec2_back(v: b2::Vec2) -> box2d3::Vec2 {
-    box2d3::Vec2{
-        x: v.x,
-        y: v.y
-    }
+    box2d3::Vec2 { x: v.x, y: v.y }
 }
 
 fn convert_color(c: &b2::Color) -> HexColor {
-    HexColor::new_from_floats(c.r,c.g,c.b)
+    HexColor::new_from_floats(c.r, c.g, c.b)
 }
 
 impl super::Engine for Engine {
@@ -53,10 +47,14 @@ impl super::Engine for Engine {
         for shape in def.shapes {
             match shape {
                 super::ShapeDef::Polygon(polygon) => {
-                    let verts: Vec<_> = polygon.vertices.iter().copied().map(convert_vec2).collect();
+                    let verts: Vec<_> =
+                        polygon.vertices.iter().copied().map(convert_vec2).collect();
                     let polygon = b2::PolygonShape::new_with(&verts);
 
-                    body.create_fast_fixture(&polygon, 1.0);
+                    let fh = body.create_fast_fixture(&polygon, 1.0);
+                    let mut fixture = body.fixture_mut(fh);
+                    fixture.set_friction(def.friction);
+                    fixture.set_restitution(def.restitution);
                 }
                 super::ShapeDef::Circle => {
                     return Err(UnsupportedError("circle shapes"));
@@ -72,13 +70,13 @@ impl super::Engine for Engine {
     }
 
     fn draw(&mut self, render: &mut Renderer) {
-
-        self.world.draw_debug_data(&mut DebugDrawer{render}, DrawFlags::DRAW_SHAPE);
+        self.world
+            .draw_debug_data(&mut DebugDrawer { render }, DrawFlags::DRAW_SHAPE);
     }
 }
 
 struct DebugDrawer<'a> {
-    render: &'a mut Renderer
+    render: &'a mut Renderer,
 }
 
 impl<'a> b2::Draw for DebugDrawer<'a> {
@@ -96,7 +94,13 @@ impl<'a> b2::Draw for DebugDrawer<'a> {
         println!("circle");
     }
 
-    fn draw_solid_circle(&mut self, center: &b2::Vec2, radius: f32, axis: &b2::Vec2, color: &b2::Color) {
+    fn draw_solid_circle(
+        &mut self,
+        center: &b2::Vec2,
+        radius: f32,
+        axis: &b2::Vec2,
+        color: &b2::Color,
+    ) {
         println!("solid circle");
     }
 
